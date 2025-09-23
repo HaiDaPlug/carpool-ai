@@ -1,0 +1,18 @@
+﻿{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true
+  },
+  "include": [
+    "web/api/**/*.ts",
+    "web/shared/**/*.ts",
+    "web/vite.config.ts",
+    "web/src/**/*.ts",
+    "web/src/**/*.tsx"
+  ]
+}
