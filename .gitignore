@@ -1,9 +1,26 @@
-node_modules
+# Dependencies
+node_modules/
 pnpm-lock.yaml
 
+# Build output
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VSCode settings
+.vscode/
+*.code-workspace
+
+# Ignore all env files in root (if you add later)
 .env
 .env.*
-!.env.example
-
-web/dist
-.vercel
