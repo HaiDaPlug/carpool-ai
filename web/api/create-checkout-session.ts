@@ -1,10 +1,8 @@
-﻿// api/create-checkout-session.ts
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 
 export const config = { runtime: 'nodejs' };
 
-// Pin to a supported API version; update if you need newer Stripe features.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2024-06-20'
 });
@@ -24,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!process.env.STRIPE_SECRET_KEY) {
-      res.status(500).json({ error: 'Missing STRIPE_SECRET_KEY' });
+      res.status(500).json({ error: 'Missing STRIPE_SECRET_KEY" in environment' });
       return;
     }
 
