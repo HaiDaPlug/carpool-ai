@@ -1,10 +1,7 @@
-﻿{
+{
   "functions": {
     "api/**/*.ts": {
       "runtime": "nodejs20.x"
     }
-  },
-  "crons": [
-    { "path": "/api/monthly-rollover", "schedule": "0 0 1 * *" }
-  ]
+  }
 }
