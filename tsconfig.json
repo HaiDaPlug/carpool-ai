@@ -1,18 +1,13 @@
 ﻿{
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "commonjs",
+    "moduleResolution": "node16",
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "noEmit": true
+    "types": ["node"],
+    "lib": ["ES2022"]
   },
-  "include": [
-    "web/api/**/*.ts",
-    "web/shared/**/*.ts",
-    "web/vite.config.ts",
-    "web/src/**/*.ts",
-    "web/src/**/*.tsx"
-  ]
+  "include": ["api/**/*.ts"]
 }

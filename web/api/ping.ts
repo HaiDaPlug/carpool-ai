@@ -1,6 +1,8 @@
-// Force Node 20 for this function (works without vercel.json)
-export const config = { runtime: "nodejs20.x" };
+// api/ping.ts
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default function handler(req: any, res: any) {
-  res.status(200).json({ message: "pong", time: new Date().toISOString() });
+export const config = { runtime: 'nodejs' };
+
+export default async function handler(_req: VercelRequest, res: VercelResponse) {
+  res.status(200).json({ ok: true, t: Date.now() });
 }
