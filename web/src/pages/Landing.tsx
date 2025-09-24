@@ -14,7 +14,7 @@ export default function Landing() {
   return (
     <main className="max-w-6xl mx-auto px-4 py-16 grid gap-10">
       <header className="text-center grid gap-3">
-        <h1 className="text-4xl font-bold">Carpool into GPT-5 for less</h1>
+        <h1 className="text-4xl font-bold">Lina är en stoooooor fis</h1>
         <p className="text-neutral-600">Clean, affordable access. Shared pool bonus every month.</p>
       </header>
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
