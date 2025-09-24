@@ -1,26 +1,27 @@
 # Dependencies
 node_modules/
-pnpm-lock.yaml
 
 # Build output
 dist/
 build/
 
 # Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-*.log
 
-# OS files
+# OS / editor
 .DS_Store
 Thumbs.db
-
-# VSCode settings
 .vscode/
 *.code-workspace
 
-# Ignore all env files in root (if you add later)
+# Root lockfile only (do NOT block /web/pnpm-lock.yaml)
+#/pnpm-lock.yaml       <-- uncomment if a root lockfile appears; keep the leading slash
+/pnpm-lock.yaml
+
+# Env at root (safe even if you don’t have any here)
 .env
 .env.*

@@ -9,3 +9,6 @@ build/
 .env
 .env.local
 .env.*
+
+# Keep the lockfile for reproducible builds
+# (do NOT ignore pnpm-lock.yaml here)
