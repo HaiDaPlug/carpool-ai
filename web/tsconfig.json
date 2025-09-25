@@ -1,18 +1,16 @@
 ﻿{
   "compilerOptions": {
     "target": "ES2022",
-    "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM"],
     "module": "ESNext",
-    "skipLibCheck": true,
-    "moduleResolution": "node16",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
+    "moduleResolution": "Bundler",
     "jsx": "react-jsx",
+
     "strict": true,
     "esModuleInterop": true,
-    "types": ["node"]
+    "skipLibCheck": true,
+
+    "baseUrl": "src",               // optional, pairs with alias below
+    "paths": { "@/*": ["*"] }       // optional, if you want "@/..."
   },
   "include": ["src", "api"]
 }

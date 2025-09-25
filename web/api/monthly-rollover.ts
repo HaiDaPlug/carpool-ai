@@ -1,5 +1,6 @@
 ﻿import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
+export const config = { runtime: 'nodejs' };
 
 const supa = createClient(
   process.env.VITE_SUPABASE_URL!,

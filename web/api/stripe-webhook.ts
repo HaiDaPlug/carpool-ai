@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { TOKEN_FORMULA_V2_1 } from "../shared/tokens";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2025-08-27.basil" as any,
 });
 
 /**
@@ -95,8 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const userId = existing.user_id;
-        const periodStart = new Date(sub.current_period_start * 1000);
-        const periodEnd = new Date(sub.current_period_end * 1000);
+        const periodStart = new Date((sub as any).current_period_start * 1000);
+        const periodEnd = new Date((sub as any).current_period_end * 1000);
 
         // Upsert subscription record
         await supa.from("subscriptions").upsert({

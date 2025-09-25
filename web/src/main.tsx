@@ -7,10 +7,13 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import './styles.css';
 import Landing from './pages/Landing';
 import Account from './pages/Account';
+import AuthTest from './pages/AuthTest';
+import { AuthProvider } from './contexts/AuthContext'; // ADD THIS
 
 const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
-  { path: '/account', element: <Account /> }
+  { path: '/account', element: <Account /> },
+  { path: '/auth-test', element: <AuthTest /> }
 ]);
 
 const queryClient = new QueryClient({
@@ -21,9 +24,11 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <SpeedInsights />
-    </QueryClientProvider>
+    <AuthProvider> {/* ADD THIS WRAPPER */}
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <SpeedInsights />
+      </QueryClientProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
