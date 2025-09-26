@@ -1,34 +1,28 @@
-import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function AuthTest() {
-  const [email, setEmail] = useState('');
-  const [pw, setPw] = useState('');
-  const [msg, setMsg] = useState('');
-
-  async function signUp() {
-    const { data, error } = await supabase.auth.signUp({ email, password: pw });
-    setMsg(error ? error.message : `Signed up: ${data.user?.email}`);
+  if (!supabase) {
+    return <div className="text-sm opacity-70 p-4">Loading auth…</div>;
   }
 
-  async function signIn() {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pw });
-    setMsg(error ? error.message : `Signed in: ${data.user?.email}`);
-  }
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({ provider: 'google' });
+  };
 
-  async function whoami() {
-    const { data: { user } } = await supabase.auth.getUser();
-    setMsg(user ? `User: ${user.email}` : 'No user');
-  }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const handleGetUser = async () => {
+    const { data } = await supabase.auth.getUser();
+    console.log(data);
+  };
 
   return (
-    <div style={{ maxWidth: 360, margin: '40px auto', display: 'grid', gap: 8 }}>
-      <input placeholder="email" value={email} onChange={e=>setEmail(e.target.value)} />
-      <input placeholder="password" type="password" value={pw} onChange={e=>setPw(e.target.value)} />
-      <button onClick={signUp}>Sign up</button>
-      <button onClick={signIn}>Sign in</button>
-      <button onClick={whoami}>Who am I?</button>
-      <pre>{msg}</pre>
+    <div className="p-4 space-y-2">
+      <button onClick={handleLogin} className="rounded bg-white text-black px-3 py-2">Login</button>
+      <button onClick={handleLogout} className="rounded bg-white/10 px-3 py-2">Logout</button>
+      <button onClick={handleGetUser} className="rounded bg-white/10 px-3 py-2">Get user</button>
     </div>
   );
 }

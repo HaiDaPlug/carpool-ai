@@ -1,37 +1,30 @@
-﻿import { useNavigate } from 'react-router-dom';
-import { TierCard } from '../components/TierCard';
+﻿import TierCard from '@/components/TierCard';
 
 export default function Landing() {
-  const nav = useNavigate();
-  const goAccount = () => nav('/account');
-
   return (
-    <main className="max-w-6xl mx-auto px-4 py-16 grid gap-10">
-      <header className="text-center grid gap-3">
-        <h1 className="text-3xl font-semibold">GPT-5 for less. No compromises.</h1>
-        <p className="opacity-80">Transparent tokens. Fair pool. Simple pricing.</p>
-      </header>
+    <div className="py-16">
+      {/* Hero */}
+      <div className="mx-auto max-w-3xl text-center space-y-4">
+        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+          Carpool into GPT-5 for less
+        </h1>
+        <p className="text-base md:text-lg opacity-70">
+          Personal + Reserve tokens with a monthly pool bonus.
+          A clean chat experience, fair pricing, simple billing.
+        </p>
+      </div>
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <TierCard
-          name="Cruiser"
-          priceId="disabled"
-          cta={goAccount}
-          bullets={['≈178k personal tokens/mo', 'Reserve cap ≈890k', 'Spending: personal → reserve']}
-        />
-        <TierCard
-          name="Power"
-          priceId="disabled"
-          cta={goAccount}
-          bullets={['≈356k personal tokens/mo', 'Reserve cap ≈1.78M', 'Spending: personal → reserve']}
-        />
-        <TierCard
-          name="Pro"
-          priceId="disabled"
-          cta={goAccount}
-          bullets={['≈711k personal tokens/mo', 'Reserve cap ≈3.56M', 'Spending: personal → reserve']}
-        />
-      </section>
-    </main>
+      {/* Tiers */}
+      <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <TierCard name="Cruiser"      price="€5.99"  note="For light use"  disabled />
+        <TierCard name="Power Driver" price="€7.99"  note="Best value"     disabled />
+        <TierCard name="Pro Driver"   price="€14.99" note="For heavy use"  disabled />
+      </div>
+
+      {/* Footnote */}
+      <p className="mx-auto mt-4 max-w-3xl text-center text-xs opacity-60">
+        Checkout is temporarily disabled while we wire up Stripe. Fuel logic is active in-app.
+      </p>
+    </div>
   );
 }

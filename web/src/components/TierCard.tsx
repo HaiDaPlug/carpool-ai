@@ -1,22 +1,29 @@
-﻿import type { FC } from 'react'
+﻿type Props = {
+  name: string;
+  price: string;
+  note?: string;
+  disabled?: boolean;
+};
 
-type Props = {
-  name: string
-  priceId: string
-  cta: (priceId: string) => void
-  bullets: string[]
+export default function TierCard({ name, price, note, disabled }: Props) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.07] transition">
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-lg font-medium">{name}</h3>
+        <div className="text-2xl">
+          {price}
+          <span className="text-xs opacity-60"> /mo</span>
+        </div>
+      </div>
+      {note && <p className="mt-2 text-sm opacity-70">{note}</p>}
+      <button
+        disabled={disabled}
+        className={`mt-5 w-full rounded-xl px-4 py-2 ${
+          disabled ? 'bg-white/10 text-white/50 cursor-not-allowed' : 'bg-white text-black'
+        }`}
+      >
+        {disabled ? 'Coming soon' : 'Get started'}
+      </button>
+    </div>
+  );
 }
-
-export const TierCard: FC<Props> = ({ name, priceId, cta, bullets }) => (
-  <div className="p-6 bg-white rounded-2xl shadow-soft grid gap-4">
-    <div className="text-xl font-semibold text-black">{name}</div>
-    <ul className="text-sm text-neutral-700 grid gap-1 list-disc ml-5">
-      {bullets.map((b, i) => (
-        <li key={i}>{b}</li>
-      ))}
-    </ul>
-    <button onClick={() => cta(priceId)} className="px-4 py-2 rounded-xl bg-black text-white">
-      Get {name}
-    </button>
-  </div>
-)
