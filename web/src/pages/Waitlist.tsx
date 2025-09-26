@@ -24,14 +24,32 @@ export default function Waitlist() {
       const resp = await fetch('/api/join-waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source, trap })
+        body: JSON.stringify({ email: email.trim().toLowerCase(), source, trap })
       });
-      const data = await resp.json();
-      if (!resp.ok || !data?.ok) throw new Error(data?.error || 'Something went wrong');
+
+      const ct = resp.headers.get('content-type') || '';
+      let payload: any = null;
+
+      if (ct.includes('application/json')) {
+        try { payload = await resp.json(); } catch { payload = null; }
+      } else {
+        try { payload = await resp.text(); } catch { payload = ''; }
+      }
+
+      if (!resp.ok || (payload && typeof payload === 'object' && payload.ok === false)) {
+        console.error('Join failed:', resp.status, payload);
+        const msg =
+          (payload && typeof payload === 'object' && payload.error) ? payload.error :
+          (typeof payload === 'string' && payload.length ? payload :
+          `Failed (${resp.status})`);
+        throw new Error(msg);
+      }
+
       setStatus('success');
       setEmail('');
       setSource('');
     } catch (err: any) {
+      console.error('Submit error:', err);
       setStatus('error');
       setError(err?.message ?? 'Server error');
     }
@@ -125,7 +143,7 @@ export default function Waitlist() {
         </div>
       )}
 
-      {/* Always clickable; we validate in onSubmit + required attr */}
+      {/* Always clickable; we validate on submit */}
       <button
         type="submit"
         aria-disabled={status === 'loading'}
