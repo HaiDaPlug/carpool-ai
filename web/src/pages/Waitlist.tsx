@@ -77,78 +77,79 @@ export default function Waitlist() {
           </div>
 
           {/* Form Card */}
-          <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur md:p-6">
-            {status === 'success' ? (
-              <SuccessCard />
-            ) : (
-              <form onSubmit={onSubmit} className="space-y-4">
-                {/* Honeypot */}
-                <input
-                  aria-hidden
-                  tabIndex={-1}
-                  autoComplete="off"
-                  className="hidden"
-                  value={trap}
-                  onChange={(e) => setTrap(e.target.value)}
-                  placeholder="Leave this empty"
-                />
+<div className="mx-auto mt-8 max-w-xl rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur md:p-6 relative z-20 pointer-events-auto">
+  {status === 'success' ? (
+    <SuccessCard />
+  ) : (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {/* Honeypot */}
+      <input
+        aria-hidden
+        tabIndex={-1}
+        autoComplete="off"
+        className="hidden"
+        value={trap}
+        onChange={(e) => setTrap(e.target.value)}
+        placeholder="Leave this empty"
+      />
 
-                <div className="grid gap-3 md:grid-cols-[1fr,160px]">
-                  <div>
-                    <label className="mb-1 block text-sm text-white/70">Email</label>
-                    <input
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none ring-0 transition focus:border-white/20"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="you@domain.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm text-white/70">How did you find us? (optional)</label>
-                    <input
-                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none ring-0 transition focus:border-white/20"
-                      type="text"
-                      placeholder="Threads / X / Reddit / Friend"
-                      value={source}
-                      onChange={(e) => setSource(e.target.value)}
-                    />
-                  </div>
-                </div>
+      <div className="grid gap-3 md:grid-cols-[1fr,160px]">
+        <div>
+          <label className="mb-1 block text-sm text-white/70">Email</label>
+          <input
+            className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none ring-0 transition focus:border-white/20"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="you@domain.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm text-white/70">How did you find us? (optional)</label>
+          <input
+            className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none ring-0 transition focus:border-white/20"
+            type="text"
+            placeholder="Threads / X / Reddit / Friend"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+          />
+        </div>
+      </div>
 
-                {status === 'error' && (
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-                    {error}
-                  </div>
-                )}
+      {status === 'error' && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          {error}
+        </div>
+      )}
 
-                <button
-                  type="submit"
-                  disabled={!isValid || status === 'loading'}
-                  className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-white px-4 py-3 font-medium text-black transition enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="relative z-10">
-                    {status === 'loading' ? 'Joining…' : 'Join the Waitlist'}
-                  </span>
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 -z-0 opacity-0 transition group-enabled:group-hover:opacity-100"
-                    style={{
-                      background:
-                        'radial-gradient(60% 60% at 50% 50%, rgba(255,115,115,0.35) 0%, rgba(255,115,115,0) 60%)'
-                    }}
-                  />
-                </button>
+      {/* Always clickable; we validate in onSubmit + required attr */}
+      <button
+        type="submit"
+        aria-disabled={status === 'loading'}
+        className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-xl bg-white px-4 py-3 font-medium text-black transition hover:opacity-90"
+      >
+        <span className="relative z-10">
+          {status === 'loading' ? 'Joining…' : 'Join the Waitlist'}
+        </span>
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-0 opacity-0 transition group-hover:opacity-100"
+          style={{
+            background:
+              'radial-gradient(60% 60% at 50% 50%, rgba(255,115,115,0.35) 0%, rgba(255,115,115,0) 60%)'
+          }}
+        />
+      </button>
 
-                <p className="text-center text-xs text-white/60">
-                  No spam. We’ll email you about launch and bonuses only.
-                </p>
-              </form>
-            )}
-          </div>
+      <p className="text-center text-xs text-white/60">
+        No spam. We’ll email you about launch and bonuses only.
+      </p>
+    </form>
+  )}
+</div>
 
           {/* Mini features */}
           <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-3 text-sm text-white/70 md:grid-cols-3">
