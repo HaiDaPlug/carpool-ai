@@ -1,22 +1,28 @@
--- ============================================================
--- Carpool GPT Database Schema + Token Functions
--- Version: v2.1 (Ghost ledger, reserve caps, pool redistribution)
--- ============================================================
+-- ===========================================
+-- Carpool AI — Core schema (Bonus → Personal; Ghost Ledger)
+-- ===========================================
+begin;
 
--- === User profile (mirror minimal data from Supabase auth) ===
+-- --- ENUM: tier ---
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'tier') then
+    create type tier as enum ('cruiser','power','pro');
+  end if;
+end$$;
+
+-- --- USERS MIRROR ---
 create table if not exists user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   email text unique not null,
   created_at timestamptz default now()
 );
 
--- === Subscription state ===
-create type if not exists tier as enum ('rider','power','pro');
-
+-- --- SUBSCRIPTIONS ---
 create table if not exists subscriptions (
   user_id uuid primary key references auth.users(id) on delete cascade,
   tier tier not null,
-  status text not null,                        -- "active", "past_due", "canceled"
+  status text not null,                        -- 'active' | 'past_due' | 'canceled'
   current_period_start date not null,
   current_period_end date not null,
   stripe_customer_id text not null,
@@ -24,170 +30,185 @@ create table if not exists subscriptions (
   updated_at timestamptz default now()
 );
 
--- === Ghost ledger (no pre-funding). Tracks balances in tokens. ===
+-- --- LEDGER (TOKENS) ---
 create table if not exists token_ledger (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  personal bigint not null default 0,
-  reserve bigint not null default 0,
-  community_bonus bigint not null default 0,
+  personal bigint not null default 0,  -- spendable now
+  reserve  bigint not null default 0,  -- rollover stash (capped by tier)
   updated_at timestamptz default now()
 );
 
--- === Usage journal (deducts from balances in order: personal -> reserve -> community_bonus) ===
+-- optional usage journal (handy for debugging/CS)
 create table if not exists usage_events (
   id bigserial primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
   tokens_used bigint not null,
-  source text not null,                        -- e.g. "chat:completion", "vision:image"
+  source text not null,                        -- e.g. "chat:completion"
   created_at timestamptz default now()
 );
 
--- === Monthly community pool (cap = 3x inflow; overflow → margin) ===
+-- --- COMMUNITY BUFFER POT (accumulates monthly buffer in TOKENS) ---
 create table if not exists community_pool (
   id smallint primary key default 1,
-  balance bigint not null default 0,
-  cap bigint not null default 0,               -- recomputed monthly
+  balance bigint not null default 0,  -- tokens sitting in the pot
   updated_at timestamptz default now()
 );
-
-insert into community_pool (id, balance, cap)
-  values (1, 0, 0)
+insert into community_pool (id, balance) values (1, 0)
   on conflict (id) do nothing;
 
--- ============================================================
--- FUNCTIONS
--- ============================================================
+-- --- CAPS (GPT-5 truth): $1 ≈ 178k tokens; caps are $5/$10/$20 ---
+drop view if exists v_reserve_caps;
+create view v_reserve_caps as
+select 'cruiser'::tier as tier,  890000::bigint as cap union all
+select 'power'::tier,           1780000::bigint union all
+select 'pro'::tier,             3560000::bigint;
 
--- 1. Monthly allocation (called from Stripe webhook on renewal)
+-- --- RPC: SPEND (personal → reserve) ---
+create or replace function spend_tokens(p_user_id uuid, p_amount bigint)
+returns void language plpgsql as $$
+declare
+  remain bigint := p_amount;
+  led record;
+  use_personal bigint := 0;
+  use_reserve  bigint := 0;
+begin
+  select * into led from token_ledger where user_id = p_user_id for update;
+  if not found then raise exception 'ledger not found for %', p_user_id; end if;
+
+  -- personal first
+  if led.personal >= remain then
+    use_personal := remain; remain := 0;
+  else
+    use_personal := led.personal; remain := remain - led.personal;
+  end if;
+
+  -- then reserve
+  if remain > 0 then
+    if led.reserve >= remain then
+      use_reserve := remain; remain := 0;
+    else
+      use_reserve := led.reserve; remain := remain - led.reserve;
+    end if;
+  end if;
+
+  update token_ledger
+  set personal = personal - use_personal,
+      reserve  = reserve  - use_reserve,
+      updated_at = now()
+  where user_id = p_user_id;
+
+  insert into usage_events(user_id, tokens_used, source)
+  values (p_user_id, p_amount, 'chat:completion');
+
+  -- if remain > 0 → app should upsell/payg
+end;
+$$;
+
+-- --- RPC: apply_monthly_allocation (called by Stripe webhook on renewal/change)
+-- expects amounts IN TOKENS already (Claude/Jerry compute with 178k tokens per $)
+-- p_personal = guaranteed monthly personal tokens (e.g., 178k cruiser)
+-- p_buffer   = monthly buffer (e.g., 89k cruiser)
 create or replace function apply_monthly_allocation(
   p_user_id uuid,
   p_personal bigint,
-  p_pool_contrib bigint
+  p_buffer bigint
 ) returns void language plpgsql as $$
+declare
+  exists_led boolean := false;
 begin
-  insert into token_ledger (user_id, personal, reserve, community_bonus)
-  values (p_user_id, p_personal, 0, 0)
-  on conflict (user_id) do update
-    set personal = token_ledger.personal + p_personal,
-        updated_at = now();
+  -- ensure ledger row
+  insert into token_ledger(user_id) values (p_user_id)
+  on conflict (user_id) do nothing;
 
+  -- top up personal with this month's guaranteed amount
+  update token_ledger
+  set personal = personal + p_personal,
+      updated_at = now()
+  where user_id = p_user_id;
+
+  -- add buffer into the community pot (silent)
   update community_pool
-  set balance = balance + p_pool_contrib,
+  set balance = balance + p_buffer,
       updated_at = now()
   where id = 1;
 end;
 $$;
 
--- 2. Spend tokens in order: personal → reserve → community_bonus
-create or replace function spend_tokens(
-  p_user_id uuid,
-  p_amount bigint
-) returns json language plpgsql as $$
-declare
-  led record;
-  remain bigint := p_amount;
-  spend_personal bigint := 0;
-  spend_reserve bigint := 0;
-  spend_bonus bigint := 0;
-begin
-  select * into led from token_ledger where user_id = p_user_id for update;
-  if not found then
-    raise exception 'ledger not found';
-  end if;
-
-  -- deduct from personal
-  if led.personal >= remain then
-    spend_personal := remain; remain := 0;
-  else
-    spend_personal := led.personal; remain := remain - led.personal;
-  end if;
-
-  -- deduct from reserve
-  if remain > 0 then
-    if led.reserve >= remain then
-      spend_reserve := remain; remain := 0;
-    else
-      spend_reserve := led.reserve; remain := remain - led.reserve;
-    end if;
-  end if;
-
-  -- deduct from community bonus
-  if remain > 0 then
-    if led.community_bonus >= remain then
-      spend_bonus := remain; remain := 0;
-    else
-      spend_bonus := led.community_bonus; remain := remain - led.community_bonus;
-    end if;
-  end if;
-
-  -- insufficient funds
-  if remain > 0 then
-    return json_build_object('ok', false, 'remaining', remain);
-  end if;
-
-  -- apply updates
-  update token_ledger
-  set personal = personal - spend_personal,
-      reserve = reserve - spend_reserve,
-      community_bonus = community_bonus - spend_bonus,
-      updated_at = now()
-  where user_id = p_user_id;
-
-  insert into usage_events (user_id, tokens_used, source)
-  values (p_user_id, p_amount, 'chat:completion');
-
-  return json_build_object(
-    'ok', true,
-    'personal', spend_personal,
-    'reserve', spend_reserve,
-    'community_bonus', spend_bonus
-  );
-end;
-$$;
-
--- 3. Monthly rollover (called on the 1st of each month)
+-- --- RPC: monthly_rollover (run on the 1st via cron)
+-- 1) Evenly split pool.balance across ACTIVE users → add to PERSONAL
+-- 2) Move remaining PERSONAL → RESERVE (cap by tier)
+-- 3) Zero the pool
 create or replace function monthly_rollover()
 returns void language plpgsql as $$
 declare
-  pool record;
-  user_count bigint := 0;
+  pot bigint := 0;
+  ucount bigint := 0;
   per_user bigint := 0;
 begin
-  -- lock pool
-  select * into pool from community_pool where id = 1 for update;
+  select balance into pot from community_pool where id = 1 for update;
+  if pot is null then pot := 0; end if;
 
-  -- redistribute pool evenly to active users
-  select count(*) into user_count from subscriptions where status = 'active';
-  if user_count > 0 and pool.balance > 0 then
-    per_user := pool.balance / user_count;
+  -- who is active
+  with active as (
+    select user_id, tier from subscriptions where status = 'active'
+  ) select count(*) into ucount from active;
 
+  if ucount > 0 and pot > 0 then
+    per_user := floor(pot / ucount);
+
+    -- add the bonus straight into PERSONAL
     update token_ledger t
-    set community_bonus = community_bonus + per_user,
+    set personal = personal + per_user,
         updated_at = now()
-    from subscriptions s
-    where t.user_id = s.user_id
-      and s.status = 'active';
+    where t.user_id in (select user_id from subscriptions where status='active');
 
-    update community_pool
-    set balance = balance - (per_user * user_count),
-        updated_at = now()
-    where id = 1;
+    -- reset pot
+    update community_pool set balance = 0, updated_at = now() where id = 1;
   end if;
 
-  -- move unused personal into reserve up to cap
+  -- PERSONAL → RESERVE (cap by tier)
+  with caps as (select * from v_reserve_caps)
   update token_ledger t
   set reserve = least(
-        reserve + personal,
+        t.reserve + t.personal,
         case s.tier
-          when 'rider' then 5000000   -- 5M token cap
-          when 'power' then 10000000  -- 10M token cap
-          when 'pro'   then 20000000  -- 20M token cap
+          when 'cruiser' then (select cap from caps where tier='cruiser')
+          when 'power'   then (select cap from caps where tier='power')
+          when 'pro'     then (select cap from caps where tier='pro')
         end
       ),
       personal = 0,
       updated_at = now()
   from subscriptions s
-  where t.user_id = s.user_id
+  where s.user_id = t.user_id
     and s.status = 'active';
 end;
 $$;
+
+-- --- RLS (basic, owner can see their own rows) ---
+alter table user_profiles enable row level security;
+alter table subscriptions enable row level security;
+alter table token_ledger enable row level security;
+alter table usage_events enable row level security;
+
+do $$ begin
+  create policy "me_read_profiles" on user_profiles
+    for select using (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create policy "me_read_subs" on subscriptions
+    for select using (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create policy "me_read_ledger" on token_ledger
+    for select using (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create policy "me_read_usage" on usage_events
+    for select using (auth.uid() = user_id);
+exception when duplicate_object then null; end $$;
+
+commit;
