@@ -9,16 +9,16 @@ export default function Landing() {
           Carpool into GPT-5 for less
         </h1>
         <p className="text-base md:text-lg opacity-70">
-          Personal + Reserve tokens with a monthly pool bonus.
+          Personal + Reserve fuel with a monthly bonus.
           A clean chat experience, fair pricing, simple billing.
         </p>
       </div>
 
       {/* Tiers */}
       <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <TierCard name="Cruiser"      price="€5.99"  note="For light use"  disabled />
-        <TierCard name="Power Driver" price="€7.99"  note="Best value"     disabled />
-        <TierCard name="Pro Driver"   price="€14.99" note="For heavy use"  disabled />
+        <TierCard name="Cruiser"      price="€5.50"  note="For light use."  disabled />
+        <TierCard name="Power Driver" price="€8.50"  note="Best value."     disabled />
+        <TierCard name="Pro Driver"   price="€14.99" note="For heavy use."  disabled />
       </div>
 
       {/* Footnote */}
