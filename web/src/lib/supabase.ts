@@ -1,5 +1,8 @@
-﻿import { createClient } from "@supabase/supabase-js";
-export const supabase = createClient(
-import.meta.env.VITE_SUPABASE_URL!,
-import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
+﻿import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+// Export nullable client; consumers must guard.
+export const supabase: SupabaseClient | null =
+  url && anon ? createClient(url, anon) : null;

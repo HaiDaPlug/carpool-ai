@@ -9,7 +9,7 @@ type Props = {
 
 export const TierCard: FC<Props> = ({ name, priceId, cta, bullets }) => (
   <div className="p-6 bg-white rounded-2xl shadow-soft grid gap-4">
-    <div className="text-xl font-semibold">{name}</div>
+    <div className="text-xl font-semibold text-black">{name}</div>
     <ul className="text-sm text-neutral-700 grid gap-1 list-disc ml-5">
       {bullets.map((b, i) => (
         <li key={i}>{b}</li>

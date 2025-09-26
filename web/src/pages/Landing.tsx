@@ -1,42 +1,37 @@
-﻿import { TierCard } from '../components/TierCard'
+﻿import { useNavigate } from 'react-router-dom';
+import { TierCard } from '../components/TierCard';
 
 export default function Landing() {
-  const checkout = async (priceId: string) => {
-    const r = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ priceId }),
-    })
-    const { url } = await r.json()
-    window.location.href = url
-  }
+  const nav = useNavigate();
+  const goAccount = () => nav('/account');
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-16 grid gap-10">
       <header className="text-center grid gap-3">
-        <h1 className="text-4xl font-bold">Carpool into GPT-5 for less</h1>
-        <p className="text-neutral-600">Clean, affordable access. Shared pool bonus every month.</p>
+        <h1 className="text-3xl font-semibold">GPT-5 for less. No compromises.</h1>
+        <p className="opacity-80">Transparent tokens. Fair pool. Simple pricing.</p>
       </header>
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <section className="grid gap-4 sm:grid-cols-3">
         <TierCard
           name="Cruiser"
-          priceId={import.meta.env.VITE_PRICE_CRUISER as string}
-          cta={checkout}
-          bullets={['$1 personal tokens', '$0.50 community buffer', 'Reserve cap $5']}
+          priceId="disabled"
+          cta={goAccount}
+          bullets={['≈178k personal tokens/mo', 'Reserve cap ≈890k', 'Spending: personal → reserve']}
         />
         <TierCard
           name="Power"
-          priceId={import.meta.env.VITE_PRICE_POWER as string}
-          cta={checkout}
-          bullets={['$2 personal tokens', '$1 community buffer', 'Reserve cap $10']}
+          priceId="disabled"
+          cta={goAccount}
+          bullets={['≈356k personal tokens/mo', 'Reserve cap ≈1.78M', 'Spending: personal → reserve']}
         />
         <TierCard
           name="Pro"
-          priceId={import.meta.env.VITE_PRICE_PRO as string}
-          cta={checkout}
-          bullets={['$4 personal tokens', '$2 community buffer', 'Reserve cap $20']}
+          priceId="disabled"
+          cta={goAccount}
+          bullets={['≈711k personal tokens/mo', 'Reserve cap ≈3.56M', 'Spending: personal → reserve']}
         />
       </section>
     </main>
-  )
+  );
 }
